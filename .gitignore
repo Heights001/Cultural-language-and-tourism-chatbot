@@ -9,3 +9,7 @@ wheels/
 # Virtual environments
 .venv
 .env
+
+# frontend
+frontend/node_modules/
+frontend/dist/
