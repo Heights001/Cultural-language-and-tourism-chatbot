@@ -4,6 +4,8 @@ import sys
 from dotenv import load_dotenv
 from openai import OpenAI
 
+from roots_season import ROOTS_INTAKE_PROMPT
+
 SYSTEM_PROMPT = """You are Kofi, a friendly Ghanaian guide. You help people learn about Ghana — culture, language, food, history, travel.
 
 TONE:
@@ -56,8 +58,11 @@ def main():
         {"role": "system", "content": SYSTEM_PROMPT},
     ]
 
+    roots_mode = False
+
     print("\n" + "=" * 60)
     print("  Kofi — Your Ghana Cultural Guide")
+    print("  Type '/roots' for Roots Season trip planning")
     print("  Type 'quit' to exit, 'clear' to reset")
     print("=" * 60 + "\n")
 
@@ -79,7 +84,32 @@ def main():
             messages = [
                 {"role": "system", "content": SYSTEM_PROMPT},
             ]
+            roots_mode = False
             print("\nKofi: Conversation reset. I'm here whenever you're ready.")
+            continue
+
+        if user_input.lower() == "/roots":
+            messages = [
+                {"role": "system", "content": ROOTS_INTAKE_PROMPT},
+            ]
+            roots_mode = True
+            print("\nKofi: ", end="", flush=True)
+            try:
+                stream = client.chat.completions.create(
+                    model=config["model"],
+                    messages=messages + [{"role": "user", "content": "Start the Roots Season intake."}],
+                    stream=True,
+                )
+                full_response = ""
+                for chunk in stream:
+                    if chunk.choices[0].delta.content:
+                        content = chunk.choices[0].delta.content
+                        print(content, end="", flush=True)
+                        full_response += content
+                print()
+                messages.append({"role": "assistant", "content": full_response})
+            except Exception as e:
+                print(f"\n[Error: {e}]")
             continue
 
         messages.append({"role": "user", "content": user_input})
